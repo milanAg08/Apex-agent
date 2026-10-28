@@ -1,0 +1,123 @@
+{
+  "ward_info": {
+    "ward_id": 34,
+    "ward_name": "D.V Gundappa Ward",
+    "zone": "South / Central",
+    "corporation": "Greater Bengaluru Authority (former BBMP)",
+    "centroid": [12.9432, 77.5738],
+    "landmarks": {
+      "bmsce": "BMS College of Engineering, Bull Temple Road",
+      "dvg_road": "D.V.G Road Commercial Market",
+      "gandhi_bazaar": "Gandhi Bazaar Circle",
+      "bugle_rock": "Bugle Rock Park Entrance",
+      "netkallappa_circle": "Netkallappa Circle, Subbarama Chetty Road",
+      "ramakrishna_ashram": "Ramakrishna Ashram Circle"
+    }
+  },
+  "segments": [
+    {
+      "segment_id": "SEG_DVG_001",
+      "name": "D.V.G. Road (North Section)",
+      "road_class": "arterial",
+      "c_road": 1.30,
+      "lanes": 4,
+      "speed_limit_kmh": 40,
+      "traffic_index": 0.88,
+      "start_coord": [12.9445, 77.5732],
+      "end_coord": [12.9420, 77.5745],
+      "bounding_box": [12.9415, 77.5725, 12.9450, 77.5750],
+      "aliases": ["dvg road", "d.v.g road", "dv gundappa road", "dvg road north", "basavanagudi market road"]
+    },
+    {
+      "segment_id": "SEG_DVG_002",
+      "name": "D.V.G. Road (South Section)",
+      "road_class": "arterial",
+      "c_road": 1.30,
+      "lanes": 4,
+      "speed_limit_kmh": 40,
+      "traffic_index": 0.85,
+      "start_coord": [12.9419, 77.5746],
+      "end_coord": [12.9395, 77.5758],
+      "bounding_box": [12.9390, 77.5740, 12.9422, 77.5765],
+      "aliases": ["dvg road south", "d.v.g. road south", "gandhi bazaar extension dvg"]
+    },
+    {
+      "segment_id": "SEG_BULL_001",
+      "name": "Bull Temple Road (BMSCE Frontage)",
+      "road_class": "arterial",
+      "c_road": 1.30,
+      "lanes": 4,
+      "speed_limit_kmh": 50,
+      "traffic_index": 0.92,
+      "start_coord": [12.9410, 77.5680],
+      "end_coord": [12.9370, 77.5695],
+      "bounding_box": [12.9365, 77.5670, 12.9415, 77.5705],
+      "aliases": ["bull temple road", "bmsce road", "bms college front", "bull temple main road"]
+    },
+    {
+      "segment_id": "SEG_GANDHI_001",
+      "name": "Gandhi Bazaar Main Road",
+      "road_class": "sub_arterial",
+      "c_road": 1.15,
+      "lanes": 2,
+      "speed_limit_kmh": 30,
+      "traffic_index": 0.78,
+      "start_coord": [12.9450, 77.5710],
+      "end_coord": [12.9425, 77.5728],
+      "bounding_box": [12.9420, 77.5700, 12.9455, 77.5735],
+      "aliases": ["gandhi bazaar", "gandhi bazaar main road", "gandhibazaar circle"]
+    },
+    {
+      "segment_id": "SEG_BUGLE_001",
+      "name": "Bugle Rock Road",
+      "road_class": "collector",
+      "c_road": 1.00,
+      "lanes": 2,
+      "speed_limit_kmh": 30,
+      "traffic_index": 0.55,
+      "start_coord": [12.9430, 77.5700],
+      "end_coord": [12.9405, 77.5715],
+      "bounding_box": [12.9400, 77.5690, 12.9435, 77.5720],
+      "aliases": ["bugle rock road", "bugle rock lane", "near bugle rock park"]
+    },
+    {
+      "segment_id": "SEG_NETKAL_001",
+      "name": "Netkallappa Circle Approach",
+      "road_class": "sub_arterial",
+      "c_road": 1.15,
+      "lanes": 2,
+      "speed_limit_kmh": 35,
+      "traffic_index": 0.72,
+      "start_coord": [12.9385, 77.5720],
+      "end_coord": [12.9365, 77.5740],
+      "bounding_box": [12.9360, 77.5715, 12.9390, 77.5745],
+      "aliases": ["netkallappa circle", "subbarama chetty road", "netkallappa road"]
+    },
+    {
+      "segment_id": "SEG_LANE_001",
+      "name": "Basavanagudi 2nd Cross Residential",
+      "road_class": "local",
+      "c_road": 0.85,
+      "lanes": 1,
+      "speed_limit_kmh": 20,
+      "traffic_index": 0.28,
+      "start_coord": [12.9435, 77.5750],
+      "end_coord": [12.9438, 77.5770],
+      "bounding_box": [12.9430, 77.5745, 12.9442, 77.5775],
+      "aliases": ["2nd cross basavanagudi", "second cross", "basavanagudi 2nd cross"]
+    },
+    {
+      "segment_id": "SEG_LANE_002",
+      "name": "Model House Street 1st Cross",
+      "road_class": "local",
+      "c_road": 0.85,
+      "lanes": 1,
+      "speed_limit_kmh": 20,
+      "traffic_index": 0.22,
+      "start_coord": [12.9412, 77.5765],
+      "end_coord": [12.9408, 77.5785],
+      "bounding_box": [12.9405, 77.5760, 12.9418, 77.5790],
+      "aliases": ["model house street", "model house 1st cross", "model house lane"]
+    }
+  ]
+}

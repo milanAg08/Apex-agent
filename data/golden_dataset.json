@@ -1,0 +1,778 @@
+{
+  "metadata": {
+    "total_scenarios": 40,
+    "tuning_count": 10,
+    "test_count": 30,
+    "city": "Bengaluru",
+    "ward": "Ward 34 D.V Gundappa Ward",
+    "reference_date": "2026-10-26"
+  },
+  "scenarios": [
+    {
+      "id": "TUNING_01",
+      "split": "tuning",
+      "name": "DVG North Duplicate Complaint Batch",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T01_R1",
+          "lat": 12.9431,
+          "lon": 77.5739,
+          "text": "Huge pothole in front of Upahara Darshini on DVG Road north, vehicles slowing down dangerously",
+          "reported_date": "2026-10-26"
+        },
+        {
+          "report_id": "T01_R2",
+          "lat": 12.9433,
+          "lon": 77.5737,
+          "text": "Crater on DVG road near upahara hotel, bikes slipping on stone gravel",
+          "reported_date": "2026-10-27"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_02",
+      "split": "tuning",
+      "name": "Vague Description Without Pin",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T02_R1",
+          "lat": null,
+          "lon": null,
+          "text": "somewhere near a tree in bangalore road is broken",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_03",
+      "split": "tuning",
+      "name": "Gandhi Bazaar Active DLP Recurrence",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "T03_R1",
+          "lat": 12.9435,
+          "lon": 77.5715,
+          "text": "Gandhi bazaar main road surface peeling off near vegetable stalls, contractor did poor job",
+          "reported_date": "2026-10-25"
+        },
+        {
+          "report_id": "T03_R2",
+          "lat": 12.9437,
+          "lon": 77.5714,
+          "text": "Depression on newly paved stretch of Gandhi Bazaar road",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_04",
+      "split": "tuning",
+      "name": "BMSCE Frontage Heavy Arterial Crater",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P1",
+      "gold_triggers": [
+        "P1 Emergency Repair: Mandatory sign-off for immediate 24h work order dispatch"
+      ],
+      "reports": [
+        {
+          "report_id": "T04_R1",
+          "lat": 12.9378,
+          "lon": 77.5691,
+          "text": "Deep 10cm crater on Bull Temple Road wheel path, standing rainwater puddle, BMTC buses swerving",
+          "reported_date": "2026-10-26"
+        },
+        {
+          "report_id": "T04_R2",
+          "lat": 12.9379,
+          "lon": 77.569,
+          "text": "Massive dangerous pothole near BMSCE back gate, immediate hazard",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_05",
+      "split": "tuning",
+      "name": "Bugle Rock Road Shallow Rutting",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P3",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T05_R1",
+          "lat": 12.9415,
+          "lon": 77.5708,
+          "text": "Shallow surface wear 2cm depth on Bugle Rock Road shoulder, cars passing normally",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_06",
+      "split": "tuning",
+      "name": "DVG South Expired Warranty Arterial",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P2",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T06_R1",
+          "lat": 12.9405,
+          "lon": 77.5752,
+          "text": "Significant 6cm pothole on DVG Road South near cloth merchant shops, traffic slowing down",
+          "reported_date": "2026-10-25"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_07",
+      "split": "tuning",
+      "name": "Netkallappa Circle Approach Pothole",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P2",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T07_R1",
+          "lat": 12.9375,
+          "lon": 77.573,
+          "text": "Netkallappa circle road has rough patch 3cm depth near auto stand",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_08",
+      "split": "tuning",
+      "name": "Residential 2nd Cross Minor Wear",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P4",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T08_R1",
+          "lat": 12.9436,
+          "lon": 77.576,
+          "text": "Small surface gravel loose in Basavanagudi 2nd cross residential, 1cm shallow depression",
+          "reported_date": "2026-10-24"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_09",
+      "split": "tuning",
+      "name": "Bull Temple Road Extensive Crater Field",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P1",
+      "gold_triggers": [
+        "Cost Gate Threshold Exceeded",
+        "P1 Emergency Repair"
+      ],
+      "reports": [
+        {
+          "report_id": "T09_R1",
+          "lat": 12.9372,
+          "lon": 77.5693,
+          "text": "Massive 25 sqm collapsed bituminous section, 9cm deep, waterlogged across Bull Temple arterial",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TUNING_10",
+      "split": "tuning",
+      "name": "Model House Street Local Lane",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P4",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "T10_R1",
+          "lat": 12.941,
+          "lon": 77.577,
+          "text": "Model House Street 1st cross residential lane has small hole near water meter, 2cm",
+          "reported_date": "2026-10-25"
+        }
+      ]
+    },
+    {
+      "id": "TEST_01",
+      "split": "test",
+      "name": "Open Ticket DVG North Duplicate Repeat",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_01_R1",
+          "lat": 12.9432,
+          "lon": 77.5738,
+          "text": "Severe pothole opposite Upahara Darshini north section DVG",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_02",
+      "split": "test",
+      "name": "Open Ticket DVG North Near Duplicate 15m away",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_02_R1",
+          "lat": 12.9433,
+          "lon": 77.5739,
+          "text": "Bikes wobbling on DVG road crater near darshini",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_03",
+      "split": "test",
+      "name": "BMSCE Open Ticket Match 1",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_03_R1",
+          "lat": 12.939,
+          "lon": 77.5688,
+          "text": "Series of potholes near BMSCE Main Gate with water accumulation",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_04",
+      "split": "test",
+      "name": "BMSCE Open Ticket Match 2",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_04_R1",
+          "lat": 12.9391,
+          "lon": 77.5687,
+          "text": "Water ponding potholes in front of BMS College gate",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_05",
+      "split": "test",
+      "name": "Gandhi Bazaar Open Ticket Repeat",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_05_R1",
+          "lat": 12.9438,
+          "lon": 77.5718,
+          "text": "Bitumen unraveling opposite Gandhi Bazaar circle market",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_06",
+      "split": "test",
+      "name": "Gandhi Bazaar Second Complaint Open Ticket",
+      "gold_branch": "BRANCH_A",
+      "gold_outcome": "MERGE_DUPLICATE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_06_R1",
+          "lat": 12.9439,
+          "lon": 77.5719,
+          "text": "Ruts and bitumen gravel loose at Gandhi Bazaar entrance",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_07",
+      "split": "test",
+      "name": "Vague park complaint without street",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_07_R1",
+          "lat": null,
+          "lon": null,
+          "text": "somewhere near bugle rock park entrance road broke",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_08",
+      "split": "test",
+      "name": "Vague tree landmark",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_08_R1",
+          "lat": null,
+          "lon": null,
+          "text": "pothole on road near a tree around bangalore south",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_09",
+      "split": "test",
+      "name": "Completely empty coordinates and vague text",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_09_R1",
+          "lat": null,
+          "lon": null,
+          "text": "unknown street please fix potholes urgently",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_10",
+      "split": "test",
+      "name": "Ambiguous Bangalore street without ward match",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_10_R1",
+          "lat": null,
+          "lon": null,
+          "text": "somewhere in Bangalore road is damaged please inspect",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_11",
+      "split": "test",
+      "name": "Vague corner shop description",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_11_R1",
+          "lat": null,
+          "lon": null,
+          "text": "near shop corner pothole deep please send team",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_12",
+      "split": "test",
+      "name": "Unreferenced locality report",
+      "gold_branch": "BRANCH_B",
+      "gold_outcome": "REQUEST_EVIDENCE",
+      "gold_priority": null,
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_12_R1",
+          "lat": null,
+          "lon": null,
+          "text": "road cracked near temple without name",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_13",
+      "split": "test",
+      "name": "Gandhi Bazaar Recurrence inside 2-year DLP #1",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_13_R1",
+          "lat": 12.9432,
+          "lon": 77.5712,
+          "text": "Gandhi Bazaar resurfaced road cracking again near flower market",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_14",
+      "split": "test",
+      "name": "Gandhi Bazaar Recurrence inside 2-year DLP #2",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_14_R1",
+          "lat": 12.944,
+          "lon": 77.5722,
+          "text": "Pavement depression on new Gandhi bazaar asphalt",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_15",
+      "split": "test",
+      "name": "Gandhi Bazaar Recurrence inside 2-year DLP #3",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_15_R1",
+          "lat": 12.9426,
+          "lon": 77.5726,
+          "text": "Gandhi Bazaar south corner overlay disintegrating under monsoon",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_16",
+      "split": "test",
+      "name": "Gandhi Bazaar Vendor complaint on new asphalt",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_16_R1",
+          "lat": 12.9448,
+          "lon": 77.5712,
+          "text": "Vendor stalls notice Gandhi Bazaar road sinking within 1 year of paving",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_17",
+      "split": "test",
+      "name": "Gandhi Bazaar Circle Recurrence",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_17_R1",
+          "lat": 12.9427,
+          "lon": 77.5725,
+          "text": "Gandhi bazaar main road junction peeling again",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_18",
+      "split": "test",
+      "name": "Gandhi Bazaar Cross connection recurrence",
+      "gold_branch": "BRANCH_C",
+      "gold_outcome": "ROUTE_TO_CONTRACTOR",
+      "gold_priority": null,
+      "gold_triggers": [
+        "Contractual Defect Liability: Routing defect to contractor imposes binding warranty obligations"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_18_R1",
+          "lat": 12.9431,
+          "lon": 77.5715,
+          "text": "Bituminous layer crumbling on recently paved Gandhi Bazaar",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_19",
+      "split": "test",
+      "name": "Bull Temple Arterial Critical Wheelpath Crater",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P1",
+      "gold_triggers": [
+        "P1 Emergency Repair: Mandatory sign-off for immediate 24h work order dispatch"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_19_R1",
+          "lat": 12.9374,
+          "lon": 77.5694,
+          "text": "Massive 8cm deep crater on Bull Temple Road wheel path with standing water",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_20",
+      "split": "test",
+      "name": "Bull Temple High Traffic Rapid Transit Skids",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P1",
+      "gold_triggers": [
+        "P1 Emergency Repair: Mandatory sign-off for immediate 24h work order dispatch"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_20_R1",
+          "lat": 12.9376,
+          "lon": 77.5692,
+          "text": "Dangerous 9cm deep pothole causing two-wheeler accidents Bull Temple Rd",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_21",
+      "split": "test",
+      "name": "DVG South Expired Arterial Severe Pothole",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P2",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_21_R1",
+          "lat": 12.94,
+          "lon": 77.5755,
+          "text": "Deep 7cm pothole on DVG road south section near clothing stores",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_22",
+      "split": "test",
+      "name": "DVG South Commercial Carriageway Hazard",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P2",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_22_R1",
+          "lat": 12.941,
+          "lon": 77.5748,
+          "text": "6cm pothole on DVG Road South commercial lane slowing cars",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_23",
+      "split": "test",
+      "name": "Bull Temple South Approach High Severity",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P1",
+      "gold_triggers": [
+        "P1 Emergency Repair: Mandatory sign-off for immediate 24h work order dispatch"
+      ],
+      "reports": [
+        {
+          "report_id": "TEST_23_R1",
+          "lat": 12.9372,
+          "lon": 77.5695,
+          "text": "Deep 8cm crater on Bull Temple road wheel path, rain filled water puddle",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_24",
+      "split": "test",
+      "name": "Netkallappa Sub-Arterial Acute Defect",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "REPAIR_NOW",
+      "gold_priority": "P2",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_24_R1",
+          "lat": 12.938,
+          "lon": 77.5725,
+          "text": "Netkallappa circle road 6.5cm pothole in center lane",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_25",
+      "split": "test",
+      "name": "Bugle Rock Collector Routine Surface Wear",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P3",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_25_R1",
+          "lat": 12.942,
+          "lon": 77.5705,
+          "text": "Bugle Rock Road has shallow 3cm rut on road shoulder",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_26",
+      "split": "test",
+      "name": "Bugle Rock Collector Entrance Mild Pothole",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P3",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_26_R1",
+          "lat": 12.941,
+          "lon": 77.5712,
+          "text": "Bugle Rock road 2.5cm shallow depression near park corner",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_27",
+      "split": "test",
+      "name": "Basavanagudi 2nd Cross Quiet Lane Pothole",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P4",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_27_R1",
+          "lat": 12.9437,
+          "lon": 77.5765,
+          "text": "2nd cross Basavanagudi residential road minor 1.5cm pothole",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_28",
+      "split": "test",
+      "name": "Basavanagudi 2nd Cross End Local Wear",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P4",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_28_R1",
+          "lat": 12.9435,
+          "lon": 77.5755,
+          "text": "Basavanagudi 2nd cross residential 2cm gravel depression",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_29",
+      "split": "test",
+      "name": "Model House Street Local Lane Mild Crack",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P4",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_29_R1",
+          "lat": 12.9411,
+          "lon": 77.5768,
+          "text": "Model House street 1st cross residential 2cm hole near house #42",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    },
+    {
+      "id": "TEST_30",
+      "split": "test",
+      "name": "Model House Street Corner Minor Defect",
+      "gold_branch": "BRANCH_D",
+      "gold_outcome": "INSPECT",
+      "gold_priority": "P4",
+      "gold_triggers": [],
+      "reports": [
+        {
+          "report_id": "TEST_30_R1",
+          "lat": 12.9409,
+          "lon": 77.578,
+          "text": "Model House street shallow 1.8cm surface dip, low traffic lane",
+          "reported_date": "2026-10-26"
+        }
+      ]
+    }
+  ]
+}
