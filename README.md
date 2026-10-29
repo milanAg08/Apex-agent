@@ -173,8 +173,9 @@ cp .env.example .env
 ### 3. Launching the Interactive Streamlit Web UI
 Run the web application to test live complaints, view step-by-step ReAct thoughts, and interact with the Human-in-the-Loop gate:
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
+*(Alternatively, `streamlit run app.py` if Python Scripts is in your system PATH).*
 
 ### 4. Running the CLI Interactive Demo
 Test all 4 decision branches directly from your terminal:
