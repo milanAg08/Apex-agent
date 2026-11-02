@@ -4,4 +4,5 @@ __pycache__/
 .pytest_cache/
 .env
 data/checkpoints.sqlite*
+data/investigation_history.sqlite*
 .DS_Store

@@ -8,12 +8,14 @@ import os
 import sys
 import json
 import time
+import sqlite3
 from datetime import datetime, date
 from typing import Dict, Any, List, Optional
 
 import streamlit as st
 import pandas as pd
 from dotenv import load_dotenv
+from langgraph.checkpoint.sqlite import SqliteSaver
 
 # Ensure root directory is in sys.path
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
@@ -22,7 +24,7 @@ if PROJECT_ROOT not in sys.path:
 
 load_dotenv()
 
-from agent.graph import create_road_agent_graph
+from agent.graph import create_road_agent_graph, CHECKPOINT_DB_PATH
 from agent.state import RoadAgentState
 from agent.llm_reasoner import ReActReasoner
 from tools.location import resolve_location
@@ -32,6 +34,7 @@ from tools.rag_tool import retrieve_criteria
 from tools.severity import score_severity
 from tools.cost import estimate_cost
 from tools.priority import calculate_priority_score
+from tools.history_store import save_investigation, update_investigation_state, load_all_investigations
 from observability.tracer import record_engineer_gate_feedback
 
 # ==============================================================================
@@ -55,6 +58,11 @@ st.markdown("""
         --apex-text: #FFF6F6;
         --apex-text-muted: #8CC7C4;
         --apex-accent: #DB1A1A;
+        /* Lighter, desaturated red for small text ON the dark background —
+           the raw brand red (#DB1A1A) is only 3.1:1 against --apex-bg, below
+           WCAG AA's 4.5:1 for body-size text. #FF6B6B clears 5.6:1. Keep
+           --apex-accent for solid fills (buttons/badges), this for text. */
+        --apex-accent-text: #FF6B6B;
         --apex-accent-soft: rgba(219, 26, 26, 0.14);
         --apex-navbar-height: 76px;
     }
@@ -116,13 +124,13 @@ st.markdown("""
         background: transparent !important;
         border: none !important;
         box-shadow: none !important;
-        padding: 4px 2px !important;
+        padding: 8px 4px !important;
         font-weight: 650 !important;
         font-size: 0.95rem !important;
         transition: color 0.15s ease;
     }
     .st-key-top_navbar button[kind="tertiary"]:hover {
-        color: var(--apex-accent) !important;
+        color: var(--apex-accent-text) !important;
         background: transparent !important;
     }
     .st-key-top_navbar button[kind="tertiary"] p { font-size: 0.95rem !important; }
@@ -188,20 +196,26 @@ st.markdown("""
         padding: 0.9rem 1rem;
     }
 
-    /* Investigation history rail */
+    /* Investigation history — a true left sidebar for the Chat workspace,
+       not a floating card: flush to the edge, full height, thin divider. */
     .st-key-history_panel {
-        background: var(--apex-surface);
-        border: 1px solid var(--apex-border);
-        border-radius: 12px;
-        padding: 1rem;
+        background: transparent;
+        border: none;
+        border-right: 1px solid var(--apex-border);
+        border-radius: 0;
+        padding: 0 1.1rem 1.5rem 0;
+        min-height: calc(100vh - var(--apex-navbar-height) - 3rem);
+        position: sticky;
+        top: calc(var(--apex-navbar-height) + 1.75rem);
+        align-self: flex-start;
     }
     .history-title {
-        font-size: 0.78rem;
+        font-size: 0.72rem;
         font-weight: 700;
-        letter-spacing: 0.06em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
         color: var(--apex-text-muted);
-        margin-bottom: 0.75rem;
+        margin-bottom: 0.9rem;
     }
     .st-key-history_panel button[kind="tertiary"] {
         background: transparent !important;
@@ -209,8 +223,12 @@ st.markdown("""
         box-shadow: none !important;
         text-align: left !important;
         justify-content: flex-start !important;
-        padding: 6px 4px !important;
+        padding: 6px 8px !important;
+        border-radius: 8px !important;
         white-space: normal !important;
+    }
+    .st-key-history_panel button[kind="tertiary"]:hover {
+        background: var(--apex-surface) !important;
     }
     .st-key-history_panel button[kind="tertiary"] p {
         text-align: left !important;
@@ -218,9 +236,34 @@ st.markdown("""
         color: var(--apex-text) !important;
         font-weight: 500 !important;
     }
-    .st-key-history_panel button[kind="tertiary"]:hover p { color: var(--apex-accent) !important; }
+    .st-key-history_panel button[kind="tertiary"]:hover p { color: var(--apex-accent-text) !important; }
+
+    /* Chat / Dashboard nav links: laid out inline, content-width, with a
+       deliberately tiny gap (not st.columns, which forces wide fixed-ratio
+       cells and makes any gap value look huge next to the leftover space). */
+    .st-key-nav_links_wrap {
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 2rem !important;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# ==============================================================================
+# PERSISTENT AGENT CHECKPOINTER (SQLite-backed, survives refresh & restarts)
+# ==============================================================================
+@st.cache_resource(show_spinner=False)
+def get_agent_app():
+    """
+    One compiled LangGraph app + SQLite checkpointer per server process,
+    reused across every rerun and every browser session so investigation
+    threads (by thread_id) can be resumed/inspected after a refresh.
+    """
+    os.makedirs(os.path.dirname(CHECKPOINT_DB_PATH), exist_ok=True)
+    conn = sqlite3.connect(CHECKPOINT_DB_PATH, check_same_thread=False)
+    checkpointer = SqliteSaver(conn)
+    return create_road_agent_graph(checkpointer=checkpointer)
 
 # ==============================================================================
 # STATE INITIALIZATION
@@ -231,17 +274,19 @@ if "active_mode" not in st.session_state:
 if "active_view" not in st.session_state:
     st.session_state["active_view"] = "Chat"
 
-if "chat_history" not in st.session_state:
-    st.session_state["chat_history"] = []
+if "all_threads" not in st.session_state:
+    # Reload every persisted investigation (thread) from disk so the
+    # history rail survives a browser refresh or server restart.
+    st.session_state["all_threads"] = load_all_investigations()
+
+if "active_thread_id" not in st.session_state:
+    st.session_state["active_thread_id"] = None
 
 if "is_running" not in st.session_state:
     st.session_state["is_running"] = False
 
 if "filter_query" not in st.session_state:
     st.session_state["filter_query"] = ""
-
-if "selected_history_idx" not in st.session_state:
-    st.session_state["selected_history_idx"] = None
 
 # ==============================================================================
 # 4 SPECIFIC REALISTIC MUNICIPAL INVESTIGATION PRESETS (NO EMOJIS)
@@ -398,8 +443,9 @@ def run_apex_pipeline(user_text: str, lat: Optional[float] = None, lon: Optional
         }
     })
 
-    # Full LangGraph execution for durable state and gate triggers
-    app = create_road_agent_graph()
+    # Full LangGraph execution against the persistent checkpointer, so this
+    # investigation's thread can be resumed/inspected by thread_id later.
+    app = get_agent_app()
     thread_id = f"chat_{int(time.time()*1000)}"
     initial_state: RoadAgentState = {
         "run_id": thread_id,
@@ -433,24 +479,44 @@ def run_apex_pipeline(user_text: str, lat: Optional[float] = None, lon: Optional
         "final_decisions": []
     }
     final_state = app.invoke(initial_state, config={"configurable": {"thread_id": thread_id}})
-    
+
+    created_at = datetime.utcnow().isoformat()
+    try:
+        save_investigation(
+            thread_id=thread_id,
+            user_query=user_text,
+            timeline=timeline_steps,
+            state=final_state,
+            created_at=created_at
+        )
+    except Exception as persist_err:
+        # Surface this instead of losing the investigation silently on next refresh.
+        st.toast(f"⚠ Could not persist investigation to disk: {persist_err}", icon="⚠️")
+
     return {
+        "thread_id": thread_id,
         "user_query": user_text,
         "timeline": timeline_steps,
-        "state": final_state
+        "state": final_state,
+        "created_at": created_at
     }
 
 # ==============================================================================
 # PINNED TOP NAVBAR (NON-SCROLLABLE AT TOP: APEX ON LEFT, CHAT/DASHBOARD + MODE ON RIGHT)
 # ==============================================================================
 _active_view_for_nav = st.session_state.get("active_view", "Chat")
+# Hierarchy comes from two levers, not color alone, so the active tab still
+# reads correctly in grayscale: var(--apex-accent-text) (contrast-safe on
+# dark) plus a heavier weight for the active tab, lighter for the inactive one.
 st.markdown(f"""
 <style>
     .st-key-nav_chat_btn button[kind="tertiary"] p {{
-        color: {'var(--apex-accent)' if _active_view_for_nav == 'Chat' else 'var(--apex-text-muted)'} !important;
+        color: {'var(--apex-accent-text)' if _active_view_for_nav == 'Chat' else 'var(--apex-text-muted)'} !important;
+        font-weight: {'700' if _active_view_for_nav == 'Chat' else '500'} !important;
     }}
     .st-key-nav_dashboard_btn button[kind="tertiary"] p {{
-        color: {'var(--apex-accent)' if _active_view_for_nav == 'Dashboard' else 'var(--apex-text-muted)'} !important;
+        color: {'var(--apex-accent-text)' if _active_view_for_nav == 'Dashboard' else 'var(--apex-text-muted)'} !important;
+        font-weight: {'700' if _active_view_for_nav == 'Dashboard' else '500'} !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -469,13 +535,14 @@ with st.container(key="top_navbar"):
         """, unsafe_allow_html=True)
 
     with nav_col_views:
-        nv_chat, nv_dash = st.columns([1, 1], gap="small")
-        with nv_chat:
+        # Two plain-text buttons laid out inline by their own CSS (not st.columns,
+        # which would give each one a wide, fixed-ratio flex cell and make the
+        # gap between them look huge regardless of the flex `gap` value).
+        with st.container(key="nav_links_wrap"):
             if st.button("Chat", key="nav_chat_btn", type="tertiary"):
                 if st.session_state["active_view"] != "Chat":
                     st.session_state["active_view"] = "Chat"
                     st.rerun()
-        with nv_dash:
             if st.button("Dashboard", key="nav_dashboard_btn", type="tertiary"):
                 if st.session_state["active_view"] != "Dashboard":
                     st.session_state["active_view"] = "Dashboard"
@@ -501,20 +568,35 @@ current_view = st.session_state.get("active_view", "Chat")
 # ==============================================================================
 # VIEW 1: CHAT WORKSPACE (CHATGPT-STYLE CONVERSATION FLOW)
 # ==============================================================================
+def find_thread(thread_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    if thread_id is None:
+        return None
+    return next((t for t in st.session_state["all_threads"] if t["thread_id"] == thread_id), None)
+
+
+def start_new_investigation(result_data: Dict[str, Any]):
+    """Prepend a freshly-run investigation to the persisted thread list and focus it."""
+    st.session_state["all_threads"].insert(0, result_data)
+    st.session_state["active_thread_id"] = result_data["thread_id"]
+
+
 def render_history_panel():
     with st.container(key="history_panel"):
         st.markdown("<div class='history-title'>Investigation History</div>", unsafe_allow_html=True)
-        history = st.session_state["chat_history"]
-        if not history:
+
+        if st.button("+ New Investigation", key="hist_new_investigation", type="tertiary", use_container_width=True):
+            st.session_state["active_thread_id"] = None
+            st.rerun()
+
+        threads = st.session_state["all_threads"]
+        if not threads:
             st.caption("No investigations yet. Run one to see it listed here.")
             return
 
-        if st.session_state["selected_history_idx"] is not None:
-            if st.button("← Show all", key="hist_show_all", type="tertiary"):
-                st.session_state["selected_history_idx"] = None
-                st.rerun()
+        st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
 
-        for h_idx, h_item in enumerate(history):
+        for h_item in threads:
+            h_thread_id = h_item["thread_id"]
             h_state = h_item["state"]
             h_outcome = h_state.get("outcome", "INSPECT")
             h_priority = h_state.get("priority")
@@ -527,36 +609,45 @@ def render_history_panel():
                 "NEEDS_REVIEW": "badge-review"
             }.get(h_outcome, "badge-inspect")
             h_label = h_item["user_query"][:58] + ("…" if len(h_item["user_query"]) > 58 else "")
+            is_active = (h_thread_id == st.session_state["active_thread_id"])
 
             st.markdown(
                 f"<span class='badge {h_badge_class}' style='font-size:0.6rem; padding:3px 8px;'>{h_outcome}</span>",
                 unsafe_allow_html=True
             )
-            if st.button(h_label, key=f"hist_btn_{h_idx}", type="tertiary", use_container_width=True):
-                st.session_state["selected_history_idx"] = h_idx
+            if st.button(
+                ("▸ " if is_active else "") + h_label,
+                key=f"hist_btn_{h_thread_id}",
+                type="tertiary",
+                use_container_width=True
+            ):
+                st.session_state["active_thread_id"] = h_thread_id
                 st.rerun()
             st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
 
 
 def render_chat_main():
-    # Action Row: New Investigation Reset Button
-    if st.session_state["chat_history"]:
+    active_thread = find_thread(st.session_state["active_thread_id"])
+    if st.session_state["active_thread_id"] and active_thread is None:
+        # Stale reference (e.g. deleted thread) — fall back to compose mode.
+        st.session_state["active_thread_id"] = None
+
+    # Action Row: New Investigation Reset Button (when viewing a past thread)
+    if active_thread is not None:
         ch_c1, ch_c2 = st.columns([3.5, 1])
         with ch_c2:
             if st.button("New Investigation", use_container_width=True, disabled=st.session_state["is_running"]):
-                st.session_state["chat_history"] = []
-                st.session_state["is_running"] = False
-                st.session_state["selected_history_idx"] = None
+                st.session_state["active_thread_id"] = None
                 st.rerun()
 
-    # Empty State: Render ChatGPT-style specific prompt starter cards
-    if not st.session_state["chat_history"]:
+    # Empty / Compose State: Render ChatGPT-style specific prompt starter cards
+    if active_thread is None:
         st.markdown("""
         <div style="text-align: center; padding: 0.5rem 0 2rem 0;">
-            <h2 style="font-weight: 800; font-size: 2.1rem; margin-bottom: 0.6rem; letter-spacing: -0.02em; color: #F1F5F9;">
+            <h2 style="font-weight: 800; font-size: 2.1rem; margin-bottom: 0.6rem; letter-spacing: -0.02em; color: var(--apex-text);">
                 Where would you like to inspect today?
             </h2>
-            <div style="font-size: 0.95rem; color: #94A3B8; max-width: 650px; margin: 0 auto; line-height: 1.6;">
+            <div style="font-size: 0.95rem; color: var(--apex-text-muted); max-width: 650px; margin: 0 auto; line-height: 1.6;">
                 APEX evaluates road-damage reports, verifies contractor defect liabilities,
                 and computes IRC:82 prioritization scores for municipal engineers.
             </div>
@@ -566,7 +657,7 @@ def render_chat_main():
         st.markdown("##### Standard Municipal Investigation Starters")
         st.markdown("<div style='height: 0.25rem;'></div>", unsafe_allow_html=True)
         p_cols = st.columns(2)
-        
+
         for idx, preset in enumerate(SPECIFIC_PRESETS):
             col_target = p_cols[idx % 2]
             with col_target:
@@ -574,7 +665,7 @@ def render_chat_main():
                     st.markdown(f"**{preset['title']}**")
                     st.caption(preset['subtitle'])
                     st.code(preset['query'], language=None)
-                    
+
                     button_label = "Running..." if st.session_state["is_running"] else "Run Investigation"
                     if st.button(button_label, key=f"starter_btn_{preset['id']}", use_container_width=True, disabled=st.session_state["is_running"]):
                         st.session_state["is_running"] = True
@@ -585,17 +676,13 @@ def render_chat_main():
                                 lon=preset["lon"],
                                 is_agentic=is_agentic_active
                             )
-                            st.session_state["chat_history"].append(result_data)
+                            start_new_investigation(result_data)
                             st.session_state["is_running"] = False
                         st.rerun()
+        return
 
-    # Active Conversation Stream (Chronological Message Feed, or a single
-    # investigation when the user picks one from the history panel)
-    sel_idx = st.session_state["selected_history_idx"]
-    if sel_idx is not None and 0 <= sel_idx < len(st.session_state["chat_history"]):
-        stream_items = [(sel_idx, st.session_state["chat_history"][sel_idx])]
-    else:
-        stream_items = list(enumerate(st.session_state["chat_history"]))
+    # Single-thread view: exactly the investigation picked in the history panel
+    stream_items = [(active_thread["thread_id"], active_thread)]
 
     for idx, item in stream_items:
         user_text = item["user_query"]
@@ -635,9 +722,9 @@ def render_chat_main():
                     <div class="telemetry-row">
                         <div>
                             <strong>{step['stage']}</strong>
-                            <div style="font-size:0.83rem; color:#94A3B8; margin-top:2px;">{step['summary']}</div>
+                            <div style="font-size:0.83rem; color:var(--apex-text-muted); margin-top:2px;">{step['summary']}</div>
                         </div>
-                        <div style="font-family:monospace; font-size:0.8rem; color:#94A3B8;">
+                        <div style="font-family:monospace; font-size:0.8rem; color:var(--apex-text-muted);">
                             <code>{step['tool']}</code> · {step['ms']}ms
                         </div>
                     </div>
@@ -705,6 +792,7 @@ def render_chat_main():
                                 cluster_context={"query": user_text}
                             )
                             item["state"]["gate_status"] = "APPROVED"
+                            update_investigation_state(item["thread_id"], item["state"])
                             st.success("Work order approved and released for dispatch!")
                             st.rerun()
 
@@ -727,6 +815,7 @@ def render_chat_main():
                                 item["state"]["gate_status"] = "EDITED"
                                 item["state"]["outcome"] = new_outcome
                                 item["state"]["priority"] = new_priority if new_priority != "None" else None
+                                update_investigation_state(item["thread_id"], item["state"])
                                 st.success("Override committed to audit trail!")
                                 st.rerun()
 
@@ -745,13 +834,14 @@ def render_chat_main():
                             item["state"]["gate_status"] = "REJECTED"
                             item["state"]["outcome"] = "NEEDS_REVIEW"
                             item["state"]["priority"] = None
+                            update_investigation_state(item["thread_id"], item["state"])
                             st.warning("Order rejected and routed to NEEDS_REVIEW.")
                             st.rerun()
                 elif gate_status in ("APPROVED", "EDITED", "REJECTED"):
                     st.success(f"Engineer Sign-Off Completed ({gate_status}) · Audit log committed to data/feedback_split.jsonl")
 
 if current_view == "Chat":
-    hist_col, main_col = st.columns([1, 3.4], gap="large")
+    hist_col, main_col = st.columns([0.9, 3.5], gap="medium")
     with hist_col:
         render_history_panel()
     with main_col:
@@ -775,7 +865,7 @@ if current_view == "Chat":
                     user_text=prompt_input,
                     is_agentic=is_agentic_active
                 )
-                st.session_state["chat_history"].append(res)
+                start_new_investigation(res)
                 st.session_state["is_running"] = False
             st.rerun()
 
