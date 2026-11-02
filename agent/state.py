@@ -55,5 +55,9 @@ class RoadAgentState(TypedDict):
     gate_status: str             # 'PENDING_EVAL', 'PAUSED_FOR_ENGINEER', 'APPROVED', 'EDITED', 'REJECTED', 'BYPASSED'
     engineer_feedback: Optional[Dict[str, Any]]
     
+    # LLM Reasoning Configuration
+    use_real_llm: Optional[bool]
+    llm_provider: Optional[str]
+    
     # Final consolidated results per cluster
     final_decisions: List[Dict[str, Any]]

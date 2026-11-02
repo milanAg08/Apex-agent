@@ -71,6 +71,38 @@ app_mode = st.sidebar.radio(
     ["Interactive Live Demo", "Evaluations & Metrics", "A/B Experiment (Sec 5.3)", "Maintenance Registry"]
 )
 
+st.sidebar.divider()
+st.sidebar.subheader("⚙️ Reasoning Engine")
+env_real_llm = os.getenv("USE_REAL_LLM", "false").strip().lower() in ("true", "1", "yes")
+engine_choice = st.sidebar.radio(
+    "Select Operating Mode",
+    ["Offline Deterministic (Rule-Based)", "Live Multi-Provider LLM (API)"],
+    index=1 if env_real_llm else 0,
+    help="Switch between 100% offline deterministic rule engine and real cloud LLM APIs (Gemini / OpenAI / Anthropic)."
+)
+
+use_live_llm = (engine_choice == "Live Multi-Provider LLM (API)")
+active_provider = "auto"
+custom_key = ""
+
+if use_live_llm:
+    active_provider = st.sidebar.selectbox("LLM Provider", ["auto", "google", "openai", "anthropic"])
+    custom_key = st.sidebar.text_input("API Key (leave empty to use .env)", type="password")
+    
+    from agent.llm_reasoner import ReActReasoner
+    status_reasoner = ReActReasoner(
+        use_llm_api=True,
+        provider=active_provider,
+        api_key=custom_key if custom_key else None
+    )
+    stat = status_reasoner.get_status()
+    if stat["has_api_key"]:
+        st.sidebar.success(f"Connected to {stat['provider'].upper()} ({stat['model']})")
+    else:
+        st.sidebar.warning(f"No active API key detected for {active_provider}. Enter key above or populate .env file.")
+else:
+    st.sidebar.info("Running 100% offline with zero cloud API dependencies.")
+
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "golden_dataset.json")
 
 # ==========================================
@@ -133,6 +165,14 @@ if app_mode == "Interactive Live Demo":
         st.subheader("2. Decision Outcome & Visible Trajectory")
         
         if run_btn:
+            if custom_key:
+                if active_provider in ("google", "gemini"):
+                    os.environ["GOOGLE_API_KEY"] = custom_key
+                elif active_provider == "openai":
+                    os.environ["OPENAI_API_KEY"] = custom_key
+                elif active_provider == "anthropic":
+                    os.environ["ANTHROPIC_API_KEY"] = custom_key
+
             report_payload = [{
                 "report_id": "UI_DEMO_01",
                 "lat": c_lat,
@@ -148,6 +188,8 @@ if app_mode == "Interactive Live Demo":
                 "run_id": "streamlit_live_run",
                 "scenario_id": "UI_DEMO",
                 "reports": report_payload,
+                "use_real_llm": use_live_llm,
+                "llm_provider": active_provider,
                 "current_cluster_index": 0,
                 "clusters": [],
                 "active_cluster": None,
@@ -204,7 +246,7 @@ if app_mode == "Interactive Live Demo":
             """, unsafe_allow_html=True)
 
             # Metadata columns
-            m1, m2, m3 = st.columns(3)
+            m1, m2, m3, m4 = st.columns(4)
             with m1:
                 cost = (state.get("cost_result") or {}).get("estimated_cost_inr", 0.0)
                 st.metric("Estimated Cost", f"₹{cost:,.2f}" if cost > 0 else "₹0.00")
@@ -212,6 +254,9 @@ if app_mode == "Interactive Live Demo":
                 st.metric("Branch Taken", state.get("active_branch") or "BRANCH_A")
             with m3:
                 st.metric("Gate Status", state.get("gate_status"))
+            with m4:
+                engine_tag = "🤖 Live LLM" if state.get("use_real_llm") else "⚡ Deterministic"
+                st.metric("Engine Mode", engine_tag)
 
             # Rationale & Citations
             st.markdown(f"**Engineering Rationale:** {state.get('rationale')}")

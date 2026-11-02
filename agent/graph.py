@@ -91,11 +91,14 @@ def create_road_agent_graph(checkpointer=None):
 def run_agent_workflow(
     reports: list,
     scenario_id: Optional[str] = None,
-    auto_approve: bool = True
+    auto_approve: bool = True,
+    use_real_llm: Optional[bool] = None,
+    llm_provider: Optional[str] = None
 ) -> dict:
     """
     Executes the agent workflow end-to-end for a given batch of reports.
     If auto_approve is True, automatically resumes if paused at the approval gate.
+    Allows toggling between deterministic rule-based and live LLM API reasoning.
     """
     # Use MemorySaver for fast thread-isolated execution
     checkpointer = MemorySaver()
@@ -108,6 +111,8 @@ def run_agent_workflow(
         "run_id": thread_id,
         "scenario_id": scenario_id,
         "reports": reports,
+        "use_real_llm": use_real_llm,
+        "llm_provider": llm_provider,
         "current_cluster_index": 0,
         "clusters": [],
         "active_cluster": None,

@@ -95,10 +95,18 @@ def run_interactive_demo():
     thread_id = f"demo_thread_{choice}"
     config = {"configurable": {"thread_id": thread_id}}
 
+    use_live_llm = "--live-llm" in sys.argv or os.getenv("USE_REAL_LLM", "false").strip().lower() in ("true", "1", "yes")
+    from agent.llm_reasoner import ReActReasoner
+    status_reasoner = ReActReasoner(use_llm_api=use_live_llm)
+    stat = status_reasoner.get_status()
+    console.print(f"[bold magenta]Engine Mode:[/bold magenta] {stat['mode']}" + (f" ({stat['provider'].upper()}:{stat['model']})" if stat['use_llm_api'] else " (Zero API dependencies)"))
+
     initial_state: RoadAgentState = {
         "run_id": thread_id,
         "scenario_id": f"DEMO_SCENARIO_{choice}",
         "reports": selected["reports"],
+        "use_real_llm": use_live_llm,
+        "llm_provider": os.getenv("LLM_PROVIDER", "auto"),
         "current_cluster_index": 0,
         "clusters": [],
         "active_cluster": None,

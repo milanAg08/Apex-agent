@@ -18,13 +18,23 @@ from observability.tracer import AgentTracer
 
 reasoner = ReActReasoner()
 
+def get_reasoner(state: RoadAgentState = None) -> ReActReasoner:
+    """Returns dynamic or state-configured reasoner."""
+    if state and state.get("use_real_llm") is not None:
+        return ReActReasoner(
+            use_llm_api=state.get("use_real_llm"),
+            provider=state.get("llm_provider")
+        )
+    return reasoner
+
 def intake_node(state: RoadAgentState) -> Dict[str, Any]:
     """Step 1: Intake and Validate. Merges reports into spatial/temporal clusters."""
+    active_reasoner = get_reasoner(state)
     reports = state.get("reports", [])
     step_count = state.get("step_count", 0) + 1
     
     first_rep = reports[0] if reports else {}
-    thought_text, planned_action = reasoner.generate_intake_thought(len(reports), first_rep)
+    thought_text, planned_action = active_reasoner.generate_intake_thought(len(reports), first_rep)
     
     # Execute clustering tool
     clusters = cluster_reports(reports)
@@ -53,7 +63,8 @@ def plan_reason_node(state: RoadAgentState) -> Dict[str, Any]:
     if not cluster:
         return {"step_count": step_count}
 
-    thought_text, planned_action, branch = reasoner.generate_cluster_evaluation_thought(cluster)
+    active_reasoner = get_reasoner(state)
+    thought_text, planned_action, branch = active_reasoner.generate_cluster_evaluation_thought(cluster)
 
     thought_entry: ThoughtStep = {
         "step_number": step_count,
@@ -132,7 +143,8 @@ def tool_node(state: RoadAgentState) -> Dict[str, Any]:
     seg_id = loc_res.get("segment_id")
     maint_res = query_maintenance_db(seg_id)
     
-    thought_text, planned_action, branch = reasoner.generate_liability_decision_thought(
+    active_reasoner = get_reasoner(state)
+    thought_text, planned_action, branch = active_reasoner.generate_liability_decision_thought(
         cluster.get("cluster_id"), maint_res
     )
 
@@ -234,7 +246,8 @@ def decide_rank_node(state: RoadAgentState) -> Dict[str, Any]:
     # Branch D: Fresh Damage Computation
     # 1. Extract physical attributes and compute severity
     text = cluster.get("combined_text", "")
-    attrs = reasoner.extract_complaint_attributes(text)
+    active_reasoner = get_reasoner(state)
+    attrs = active_reasoner.extract_complaint_attributes(text)
     sev_res = score_severity(
         depth_cm=attrs["depth_cm"],
         area_sqm=attrs["area_sqm"],
