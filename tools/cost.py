@@ -1,62 +1,56 @@
-"""
-Tool 5: estimate_cost
-Calculates rough repair expenditure from cluster patch area (m²), depth (cm), and road class.
-Flags if total estimated cost exceeds the 25,000 INR approval gate threshold.
-"""
-
 from typing import Dict, Any, Optional
 
-BASE_UNIT_RATE_INR_PER_SQM = 1200.0
-APPROVAL_GATE_COST_LIMIT_INR = 25000.0
+BASE_RATE_INR_PER_SQM = 1200.0   # BBMP-era patch rate
+COST_GATE_INR = 25000.0          # Approval gate limit
+UNCERTAINTY = 0.25               # +/-25% on the estimate
 
 ROAD_CLASS_MULTIPLIERS = {
-    "arterial": 1.25,
-    "sub_arterial": 1.15,
-    "collector": 1.00,
-    "local": 0.85
+    "arterial": 1.25, 
+    "sub_arterial": 1.15, 
+    "collector": 1.00, 
+    "local": 0.85,
 }
 
+DEPTH_BANDS = [
+    (7.5, 1.35, "deep (over 75 mm)"),
+    (5.0, 1.15, "medium (over 50 mm, up to 75 mm)"),
+    (0.0, 1.00, "shallow (up to 50 mm)"),
+]
+
 def estimate_cost(
-    area_m2: float = 1.5,
-    depth_cm: float = 4.0,
-    road_class: str = "collector",
-    base_rate: float = BASE_UNIT_RATE_INR_PER_SQM
+    area_m2: Optional[float] = 1.5,
+    depth_cm: Optional[float] = 4.0,
+    road_class: Optional[str] = "collector",
 ) -> Dict[str, Any]:
-    """
-    Computes patch cost based on engineering parameters.
-    """
-    safe_area = max(0.2, float(area_m2))
-    safe_depth = max(1.0, float(depth_cm))
-    rc = road_class.lower() if road_class else "collector"
+    # 1. Fallback defaults if citizen complaint did not specify physical dimensions
+    safe_area = float(area_m2) if (area_m2 is not None and area_m2 > 0) else 1.5
+    safe_depth = float(depth_cm) if (depth_cm is not None and depth_cm > 0) else 4.0
+    rc = road_class.strip().lower() if road_class else "collector"
+    road_mult = ROAD_CLASS_MULTIPLIERS.get(rc, 1.00)
 
-    # Depth multiplier
-    if safe_depth > 7.5:
-        depth_multiplier = 1.35
-        depth_spec = "Deep crater (>75mm), GSB course required"
-    elif safe_depth > 5.0:
-        depth_multiplier = 1.15
-        depth_spec = "Medium depth (50-75mm), Tack coat and leveling required"
-    else:
-        depth_multiplier = 1.00
-        depth_spec = "Standard surface patch (<50mm)"
+    # 2. Depth band resolution
+    depth_mult, depth_band = next(
+        (m, label) for t, m, label in DEPTH_BANDS if safe_depth > t
+    )
 
-    road_multiplier = ROAD_CLASS_MULTIPLIERS.get(rc, 1.00)
+    # 3. Calculate estimate and +/-25% uncertainty range
+    mid = safe_area * BASE_RATE_INR_PER_SQM * depth_mult * road_mult
+    low = mid * (1 - UNCERTAINTY)
+    high = mid * (1 + UNCERTAINTY)
 
-    # Unit rate with multipliers
-    effective_unit_rate = base_rate * depth_multiplier * road_multiplier
-    total_cost = round(safe_area * effective_unit_rate, 2)
-
-    exceeds_cost_gate = total_cost > APPROVAL_GATE_COST_LIMIT_INR
+    est_rounded = float(round(mid, -2))
 
     return {
-        "estimated_cost_inr": total_cost,
-        "base_unit_rate_inr": base_rate,
-        "effective_unit_rate_inr": round(effective_unit_rate, 2),
+        "status": "ok",
+        "estimated_cost_inr": est_rounded,      # Required by existing agent/nodes.py & app.py
+        "estimate_inr": est_rounded,            # Your preferred key
+        "range_inr": (float(round(low, -2)), float(round(high, -2))),
         "area_m2": safe_area,
         "depth_cm": safe_depth,
-        "depth_multiplier": depth_multiplier,
-        "depth_specification": depth_spec,
-        "road_class_multiplier": road_multiplier,
-        "exceeds_cost_gate": exceeds_cost_gate,
-        "cost_gate_limit_inr": APPROVAL_GATE_COST_LIMIT_INR
+        "depth_band": depth_band,
+        "depth_multiplier": depth_mult,
+        "road_class": rc,
+        "road_class_multiplier": road_mult,
+        "exceeds_cost_gate": high > COST_GATE_INR,  # Conservative: uses high end
+        "cost_gate_limit_inr": COST_GATE_INR,
     }
