@@ -751,11 +751,17 @@ def render_chat_main():
 
                 # Formula breakdown for REPAIR_NOW
                 if outcome == "REPAIR_NOW":
+                    prio_inputs = prio_data.get("inputs", {}) or {}
+                    prio_weights = prio_data.get("weights", {}) or {}
+                    w_s = prio_weights.get("w_s", 0.40)
+                    w_t = prio_weights.get("w_t", 0.30)
+                    w_h = prio_weights.get("w_h", 0.15)
+                    w_r = prio_weights.get("w_r", 0.15)
                     with st.container(border=True):
                         st.markdown("**Priority Equation Evaluation (IRC:82 Section 3.2):**")
                         st.latex(r"P = c_{road} \times (0.40 \cdot S + 0.30 \cdot T + 0.15 \cdot H + 0.15 \cdot R)")
                         st.markdown(
-                            f"**Computed Score:** `{prio_data.get('c_road_multiplier', 1.0)}` × (0.40·`{prio_data.get('severity_component', 0.0):.2f}` + 0.30·`{prio_data.get('traffic_component', 0.0):.2f}` + 0.15·`{prio_data.get('history_risk_component', 0.0):.2f}` + 0.15·`{prio_data.get('volume_component', 0.0):.2f}`) = **`{prio_data.get('composite_score', 0.0):.3f}`** → Priority Band **`{priority}`** ({prio_data.get('response_time_sla', '<24 hours')})"
+                            f"**Computed Score:** `{prio_data.get('c_road', 1.0)}` × ({w_s:.2f}·`{prio_inputs.get('severity_S', 0.0):.2f}` + {w_t:.2f}·`{prio_inputs.get('traffic_T', 0.0):.2f}` + {w_h:.2f}·`{prio_inputs.get('history_risk_H', 0.0):.2f}` + {w_r:.2f}·`{prio_inputs.get('report_volume_R', 0.0):.2f}`) = **`{prio_data.get('priority_score', 0.0):.3f}`** → Priority Band **`{priority}`** ({prio_data.get('response_time_sla', '<24 hours')})"
                         )
 
                 # Special Outcome details
