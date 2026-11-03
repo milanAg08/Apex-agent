@@ -123,6 +123,14 @@ class AgenticRAGGrader:
 
         # Fallback triggered
         fallback = get_fallback_rule(target_category)
+        # Carry through any per-road-class threshold values the fallback rule
+        # holds, under the same "threshold_data" key a successful retrieval
+        # chunk uses — so downstream decision logic reads one consistent
+        # field regardless of whether retrieval succeeded or fell back.
+        fallback_threshold_data = {
+            k: v for k, v in fallback.items()
+            if k in ("arterial", "sub_arterial", "collector", "local")
+        } or None
         return {
             "status": "FALLBACK_TRIGGERED",
             "chunk": {
@@ -132,7 +140,8 @@ class AgenticRAGGrader:
                 "category": target_category,
                 "text": str(fallback),
                 "confidence_score": 1.0,
-                "citation": fallback.get("citation", "Default Municipal Fallback Rule Table")
+                "citation": fallback.get("citation", "Default Municipal Fallback Rule Table"),
+                "threshold_data": fallback_threshold_data
             },
             "citation": fallback.get("citation", "Default Municipal Fallback Rule Table"),
             "confidence_score": 1.0,

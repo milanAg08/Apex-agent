@@ -85,13 +85,18 @@ class ReportClusterer:
         cluster_lon: float,
         cluster_text: str,
         cluster_date: str,
-        cluster_segment_id: Optional[str] = None
+        cluster_segment_id: Optional[str] = None,
+        open_tickets: Optional[List[Dict[str, Any]]] = None
     ) -> Optional[Dict[str, Any]]:
         """
         Checks if a cluster matches an existing active ticket.
         Returns matching ticket dict if duplicate condition holds.
+        If `open_tickets` is given, that frozen snapshot is used instead of
+        re-querying the live database — needed for reproducible eval runs,
+        where a golden scenario carries its own snapshot of open tickets.
         """
-        open_tickets = self.fetch_open_tickets()
+        if open_tickets is None:
+            open_tickets = self.fetch_open_tickets()
         c_date = self.parse_date(cluster_date)
 
         for ticket in open_tickets:
@@ -117,9 +122,15 @@ class ReportClusterer:
 
         return None
 
-    def cluster(self, reports: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def cluster(
+        self,
+        reports: List[Dict[str, Any]],
+        open_tickets: Optional[List[Dict[str, Any]]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Groups list of incoming reports into deduplicated clusters and checks against open tickets.
+        `open_tickets`, when given, is a frozen snapshot used for every duplicate check
+        instead of the live database (reproducible eval runs).
         """
         if not reports:
             return []
@@ -191,7 +202,8 @@ class ReportClusterer:
                     cluster["centroid_lon"],
                     cluster["combined_text"],
                     cluster["latest_date"],
-                    cluster.get("segment_id")
+                    cluster.get("segment_id"),
+                    open_tickets=open_tickets
                 )
                 if dup_match:
                     cluster["is_duplicate"] = True
@@ -201,6 +213,10 @@ class ReportClusterer:
         return clusters
 
 def cluster_reports(reports: List[Dict[str, Any]], open_tickets: Optional[List[Dict[str, Any]]] = None) -> List[Dict[str, Any]]:
-    """Public tool function to cluster incoming reports."""
+    """
+    Public tool function to cluster incoming reports.
+    Pass `open_tickets` (a frozen snapshot) for reproducible eval runs; omit it
+    to check duplicates against the live maintenance_db.sqlite, as before.
+    """
     clusterer = ReportClusterer()
-    return clusterer.cluster(reports)
+    return clusterer.cluster(reports, open_tickets=open_tickets)

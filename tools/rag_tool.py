@@ -32,5 +32,11 @@ def retrieve_criteria(query: str, category: str = "defect_liability") -> Dict[st
         "rewrites_attempted": result["rewrites_attempted"],
         # Per-attempt grading trace (query tried, chunk, score, pass/fail, reason) —
         # this is what makes the "agentic" part of the RAG step demonstrable.
-        "grading_history": result.get("grading_history", [])
+        "grading_history": result.get("grading_history", []),
+        # Structured decision data carried by whichever chunk was actually
+        # retrieved (or the fallback rule, if retrieval missed) — lets a
+        # caller use the retrieved value directly instead of a hardcoded
+        # constant, so a different/wrong retrieval genuinely changes the
+        # downstream decision rather than only the citation text.
+        "threshold_data": result["chunk"].get("threshold_data")
     }

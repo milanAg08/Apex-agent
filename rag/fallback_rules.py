@@ -15,7 +15,12 @@ FALLBACK_RULES: Dict[str, Any] = {
         "contractor_recurrence_obligation": True,
         "rule_id": "FALLBACK_DLP_001"
     },
-    "severity_thresholds": {
+    # Keyed "action_thresholds" to match the category every caller actually
+    # passes (agent/nodes.py, app.py, rag/corpus.py chunk) — it was previously
+    # "severity_thresholds", which no caller ever requests, so a low-confidence
+    # retrieval for this category silently fell through to the generic,
+    # value-less fallback stub instead of this populated table.
+    "action_thresholds": {
         "source": "Default Municipal Fallback Rule Table (IRC:82 baseline)",
         "citation": "Fallback Rule Table: Baseline action threshold = 0.70 across road classes",
         "arterial": 0.65,

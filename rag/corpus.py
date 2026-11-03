@@ -65,7 +65,17 @@ POLICY_CHUNKS: List[Dict[str, Any]] = [
             "3. Collector Roads (c_road = 1.00): Severity threshold >= 0.75 triggers REPAIR_NOW; below 0.75 triggers INSPECT. "
             "4. Local Residential Streets / Lanes (c_road = 0.85): Severity threshold >= 0.85 triggers REPAIR_NOW; below 0.85 triggers INSPECT."
         ),
-        "keywords": ["action threshold", "road class", "arterial", "sub-arterial", "collector", "local", "inspect", "repair_now", "0.65", "0.75"]
+        "keywords": ["action threshold", "road class", "arterial", "sub-arterial", "collector", "local", "inspect", "repair_now", "0.65", "0.75"],
+        # Structured counterpart of the prose above — this is what actually
+        # drives the REPAIR_NOW/INSPECT boundary in decide_rank_node, so a
+        # different retrieved chunk (or a low-confidence miss) genuinely
+        # changes the decision instead of only changing the citation text.
+        "threshold_data": {
+            "arterial": 0.65,
+            "sub_arterial": 0.70,
+            "collector": 0.75,
+            "local": 0.85
+        }
     },
     {
         "chunk_id": "GBA_RESP_001",

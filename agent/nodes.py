@@ -295,9 +295,18 @@ def decide_rank_node(state: RoadAgentState) -> Dict[str, Any]:
     )
     priority_level = p_res["priority_level"]
 
-    # 4. Action threshold evaluation
-    thresholds = {"arterial": 0.65, "sub_arterial": 0.70, "collector": 0.75, "local": 0.85}
-    action_threshold = thresholds.get(road_class.lower(), 0.70)
+    # 4. Action threshold evaluation — sourced from what retrieve_criteria
+    # actually returned (the chunk it retrieved, or its own fallback rule if
+    # confidence stayed low), not a hardcoded constant. This is what makes a
+    # wrong/different retrieval genuinely change the REPAIR_NOW/INSPECT
+    # outcome, not just the citation text attached to it.
+    DEFAULT_ACTION_THRESHOLDS = {"arterial": 0.65, "sub_arterial": 0.70, "collector": 0.75, "local": 0.85}
+    retrieved_thresholds = rag_res.get("threshold_data") or {}
+    action_threshold = retrieved_thresholds.get(road_class.lower())
+    if action_threshold is None:
+        # Retrieval returned a chunk with no usable threshold data at all
+        # (e.g. the wrong category) — last-resort safety net only.
+        action_threshold = DEFAULT_ACTION_THRESHOLDS.get(road_class.lower(), 0.70)
 
     if severity_score >= action_threshold:
         outcome = "REPAIR_NOW"

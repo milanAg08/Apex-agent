@@ -54,7 +54,12 @@ class PolicyRetriever:
                 "category": chunk["category"],
                 "text": chunk["text"],
                 "confidence_score": round(final_score, 4),
-                "citation": citation
+                "citation": citation,
+                # Structured decision data carried by this chunk, if any
+                # (e.g. per-road-class action thresholds). Not used for
+                # scoring, just passed through for callers that need a
+                # machine-usable value instead of parsing the prose text.
+                "threshold_data": chunk.get("threshold_data")
             })
 
         # Sort descending by score
