@@ -732,6 +732,31 @@ def render_chat_main():
                     with st.expander(f"Raw Tool Payload ({step['tool']})", expanded=False):
                         st.json(step["payload"])
 
+            # 2a-i. Agent Planning Trace (ReAct: Thought -> Action -> Observation per step)
+            agent_thoughts = state.get("thoughts") or []
+            if agent_thoughts:
+                with st.expander(f"Agent Planning Trace — ReAct Loop ({len(agent_thoughts)} Steps)", expanded=False):
+                    for t in agent_thoughts:
+                        st.markdown(f"**Step {t.get('step_number')} · Action: `{t.get('action')}`**")
+                        st.markdown(f"- **Thought:** {t.get('thought')}")
+                        if t.get("action_input"):
+                            st.markdown(f"- **Action Input:** `{t.get('action_input')}`")
+                        st.markdown(f"- **Observation:** {t.get('observation')}")
+                        st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+
+            # 2a-ii. Agentic RAG Retrieval Trace (grade -> rewrite -> fallback)
+            rag_grading_history = (state.get("rag_result") or {}).get("grading_history") or []
+            if rag_grading_history:
+                with st.expander(f"Agentic RAG Trace — Retrieval, Grading & Rewrite ({len(rag_grading_history)} Attempts)", expanded=False):
+                    for g in rag_grading_history:
+                        pass_badge = "✅ PASSED" if g.get("passed") else "❌ FAILED"
+                        st.markdown(f"**Attempt {g.get('attempt')}** — Query: `{g.get('query')}`")
+                        st.markdown(f"- Best chunk: `{g.get('best_chunk_id')}` · Score: `{g.get('score'):.2f}` · {pass_badge}")
+                        st.markdown(f"- Reason: {g.get('reason')}")
+                        st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+                    if (state.get("rag_result") or {}).get("fallback_used"):
+                        st.warning("All retrieval attempts fell below the confidence threshold — the agent fell back to the default municipal rule table instead of guessing.")
+
             # 2b. The Decision Card
             with st.container(border=True):
                 # Header row

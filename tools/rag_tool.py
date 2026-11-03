@@ -29,5 +29,8 @@ def retrieve_criteria(query: str, category: str = "defect_liability") -> Dict[st
         "clause": result["chunk"].get("clause", ""),
         "confidence_score": result["confidence_score"],
         "fallback_used": result["fallback_used"],
-        "rewrites_attempted": result["rewrites_attempted"]
+        "rewrites_attempted": result["rewrites_attempted"],
+        # Per-attempt grading trace (query tried, chunk, score, pass/fail, reason) —
+        # this is what makes the "agentic" part of the RAG step demonstrable.
+        "grading_history": result.get("grading_history", [])
     }
