@@ -687,7 +687,6 @@ def render_chat_main():
     for idx, item in stream_items:
         user_text = item["user_query"]
         state = item["state"]
-        timeline = item["timeline"]
 
         # 1. User Message Box
         with st.chat_message("user"):
@@ -715,47 +714,59 @@ def render_chat_main():
                 "NEEDS_REVIEW": "badge-review"
             }.get(outcome, "badge-inspect")
 
-            # 2a. Observability & Tool Chronology (Collapsible Timeline)
-            with st.expander(f"Execution Trajectory & Observability ({len(timeline)} Stages Completed)", expanded=False):
-                for step in timeline:
-                    st.markdown(f"""
-                    <div class="telemetry-row">
-                        <div>
-                            <strong>{step['stage']}</strong>
-                            <div style="font-size:0.83rem; color:var(--apex-text-muted); margin-top:2px;">{step['summary']}</div>
-                        </div>
-                        <div style="font-family:monospace; font-size:0.8rem; color:var(--apex-text-muted);">
-                            <code>{step['tool']}</code> · {step['ms']}ms
-                        </div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    with st.expander(f"Raw Tool Payload ({step['tool']})", expanded=False):
-                        st.json(step["payload"])
-
-            # 2a-i. Agent Planning Trace (ReAct: Thought -> Action -> Observation per step)
+            # 2a. Unified Agent Execution Trace — one chronological list, exactly as
+            # the graph actually ran it: thought -> tool call -> observation per
+            # step, with retrieval's own grade/rewrite/fallback sub-steps nested
+            # inside the one step where they happened (between the tool calls
+            # before and after it), instead of three separate, disconnected lists.
             agent_thoughts = state.get("thoughts") or []
-            if agent_thoughts:
-                with st.expander(f"Agent Planning Trace — ReAct Loop ({len(agent_thoughts)} Steps)", expanded=False):
-                    for t in agent_thoughts:
-                        st.markdown(f"**Step {t.get('step_number')} · Action: `{t.get('action')}`**")
-                        st.markdown(f"- **Thought:** {t.get('thought')}")
-                        if t.get("action_input"):
-                            st.markdown(f"- **Action Input:** `{t.get('action_input')}`")
-                        st.markdown(f"- **Observation:** {t.get('observation')}")
-                        st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+            rag_result_full = state.get("rag_result") or {}
+            STEP_STATE_KEYS = {
+                "cluster_reports": ["clusters"],
+                "resolve_location": ["location_result"],
+                "score_severity": ["severity_result", "cost_result", "maintenance_result"],
+                "query_maintenance_db": ["maintenance_result"],
+                "retrieve_criteria": ["rag_result"],
+                "calculate_priority_score": ["priority_result"],
+                "request_approval": ["priority_result", "gate_triggers"],
+                "evaluate_gate_triggers": ["gate_triggers"],
+            }
+            with st.expander(f"Agent Execution Trace — Planning, Tools & Retrieval ({len(agent_thoughts)} Steps)", expanded=False):
+                if not agent_thoughts:
+                    st.caption("No trace recorded for this run.")
+                for t in agent_thoughts:
+                    action = t.get("action", "")
+                    st.markdown(f"**Step {t.get('step_number')} · Thought → Action: `{action}` → Observation**")
+                    st.markdown(f"- **Thought:** {t.get('thought')}")
+                    if t.get("action_input"):
+                        st.markdown(f"- **Action Input:** `{t.get('action_input')}`")
+                    st.markdown(f"- **Observation:** {t.get('observation')}")
 
-            # 2a-ii. Agentic RAG Retrieval Trace (grade -> rewrite -> fallback)
-            rag_grading_history = (state.get("rag_result") or {}).get("grading_history") or []
-            if rag_grading_history:
-                with st.expander(f"Agentic RAG Trace — Retrieval, Grading & Rewrite ({len(rag_grading_history)} Attempts)", expanded=False):
-                    for g in rag_grading_history:
-                        pass_badge = "✅ PASSED" if g.get("passed") else "❌ FAILED"
-                        st.markdown(f"**Attempt {g.get('attempt')}** — Query: `{g.get('query')}`")
-                        st.markdown(f"- Best chunk: `{g.get('best_chunk_id')}` · Score: `{g.get('score'):.2f}` · {pass_badge}")
-                        st.markdown(f"- Reason: {g.get('reason')}")
-                        st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
-                    if (state.get("rag_result") or {}).get("fallback_used"):
-                        st.warning("All retrieval attempts fell below the confidence threshold — the agent fell back to the default municipal rule table instead of guessing.")
+                    # Retrieval's grade -> rewrite -> fallback sub-steps, shown
+                    # right here, between the tool call before and after it.
+                    if action == "retrieve_criteria" and rag_result_full.get("grading_history"):
+                        st.markdown("&nbsp;&nbsp;&nbsp;&nbsp;**↳ Agentic retrieval sub-steps (grade → rewrite → fallback):**", unsafe_allow_html=True)
+                        for g in rag_result_full["grading_history"]:
+                            pass_badge = "✅ PASSED" if g.get("passed") else "❌ FAILED"
+                            st.markdown(
+                                f"&nbsp;&nbsp;&nbsp;&nbsp;— Attempt {g.get('attempt')}: query `{g.get('query')}` → "
+                                f"chunk `{g.get('best_chunk_id')}`, score `{g.get('score', 0.0):.2f}` · {pass_badge}",
+                                unsafe_allow_html=True
+                            )
+                            st.markdown(f"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{g.get('reason')}", unsafe_allow_html=True)
+                        if rag_result_full.get("fallback_used"):
+                            st.warning("Retrieval confidence stayed below threshold on every attempt — fell back to the default municipal rule table instead of guessing.")
+
+                    # Raw tool/state payload for this step, nested, if available.
+                    payload = {k: state.get(k) for k in STEP_STATE_KEYS.get(action, []) if state.get(k) is not None}
+                    if payload:
+                        with st.expander(f"Raw data for this step ({action})", expanded=False):
+                            st.json(payload)
+
+                    st.markdown(
+                        "<div style='height:10px; border-bottom:1px dashed var(--apex-border); margin-bottom:10px;'></div>",
+                        unsafe_allow_html=True
+                    )
 
             # 2b. The Decision Card
             with st.container(border=True):
