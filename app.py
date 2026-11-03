@@ -698,7 +698,8 @@ def render_chat_main():
             priority = state.get("priority")
             citation = state.get("citation", "Standard Municipal Guidelines")
             rationale = state.get("rationale", "")
-            cost_val = (state.get("cost_result") or {}).get("estimated_cost_inr", 0.0)
+            cost_data = state.get("cost_result") or {}
+            cost_val = cost_data.get("estimated_cost_inr", 0.0)
             triggers = state.get("gate_triggers", [])
             requires_approval = state.get("requires_approval", False)
             gate_status = state.get("gate_status", "APPROVED")
@@ -780,7 +781,15 @@ def render_chat_main():
                     st.markdown(f"### {loc_data.get('road_name', 'Resolved Segment')}")
                     st.caption(f"Road Class: **{loc_data.get('road_class', 'Urban Local').upper()}** · Bengaluru Central Ward 34")
                 with card_c2:
-                    st.metric("Estimated Spend", f"₹{cost_val:,.2f}" if cost_val > 0 else "₹0.00")
+                    # Key off `outcome`, not cost_result's own status marker: the
+                    # outcome field is always reliable, including for investigations
+                    # persisted before cost_result started carrying that marker.
+                    if outcome in ("MERGE_DUPLICATE", "REQUEST_EVIDENCE"):
+                        st.metric("Estimated Spend", "N/A", "No repair job scored")
+                    elif outcome == "ROUTE_TO_CONTRACTOR":
+                        st.metric("Estimated Spend", "₹0.00", "Contractor liability")
+                    else:
+                        st.metric("Estimated Spend", f"₹{cost_val:,.2f}" if cost_val > 0 else "₹0.00")
 
                 st.markdown(f"**Engineering Rationale:** {rationale}")
                 st.info(f"**Policy Grounding Citation:** `{citation}`")

@@ -93,7 +93,11 @@ def plan_reason_node(state: RoadAgentState) -> Dict[str, Any]:
                 f"Merged to prevent redundant municipal dispatch."
             ),
             "requires_approval": False,
-            "gate_status": "BYPASSED"
+            "gate_status": "BYPASSED",
+            # No repair job is being created, so no cost estimate applies —
+            # clear whatever patch estimate was pre-computed before the
+            # branch was known, instead of leaking it into the UI.
+            "cost_result": {"status": "not_applicable", "estimated_cost_inr": 0.0}
         })
 
     return updates
@@ -136,6 +140,9 @@ def tool_node(state: RoadAgentState) -> Dict[str, Any]:
             "rationale": "Location coordinates and description are insufficient to identify road segment. Requesting photo or GPS pin.",
             "requires_approval": False,
             "gate_status": "BYPASSED",
+            # Nothing has been scored or costed yet — clear any pre-computed
+            # estimate rather than showing a number for unconfirmed damage.
+            "cost_result": {"status": "not_applicable", "estimated_cost_inr": 0.0},
             "thoughts": [thought_entry]
         }
 
@@ -219,7 +226,18 @@ def decide_rank_node(state: RoadAgentState) -> Dict[str, Any]:
             f"rectified by {contractor} at zero cost to the municipality."
         )
         gate_eval = evaluate_gate_triggers(outcome="ROUTE_TO_CONTRACTOR", priority=None, cost_inr=0.0)
-        
+
+        # Rectification is the contractor's contractual liability, not a
+        # municipal spend — zero out cost_result so the UI doesn't display
+        # whatever patch estimate was pre-computed before the branch was known.
+        contractor_cost_res = {
+            "status": "contractor_liability",
+            "estimated_cost_inr": 0.0,
+            "estimate_inr": 0.0,
+            "range_inr": [0.0, 0.0],
+            "note": "Rectification cost borne by the contractor under the defect liability period; zero cost to the municipality."
+        }
+
         thought_text = (
             f"THOUGHT: Routing defect directly to {contractor}. Bypassing priority scoring because "
             f"rectification is contractor's contractual liability. Flagging for mandatory engineer sign-off gate."
@@ -236,6 +254,7 @@ def decide_rank_node(state: RoadAgentState) -> Dict[str, Any]:
             "step_count": step_count,
             "outcome": "ROUTE_TO_CONTRACTOR",
             "priority": None,
+            "cost_result": contractor_cost_res,
             "rationale": rationale,
             "requires_approval": gate_eval["requires_approval"],
             "gate_triggers": gate_eval["active_triggers"],
